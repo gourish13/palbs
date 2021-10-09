@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+## Shows help and exit
+function _show_help {
+	echo 'Help'
+}
+
+## List all the binaries currently playing some media.
+function _list_media_sources {
+	filter=$1
+	src=$(pactl list sink-inputs | \
+			grep -e Input -e binary | \
+			awk '{ print $NF }' | 
+			tr -d '"#' | tr '\t' '\n' \
+		)
+	[[ $src == '' ]] && echo 'No media source found.' && return 0
+	echo 'Media Sources'
+	echo '============='
+	if [ -z "$filter" ]; then
+		echo $src | sed 's/[[:space:]][0-9]/\n/g'
+	else
+		echo $src | sed 's/[[:space:]][0-9]/\n/g' | grep -i $filter
+	fi
+		
+}
+
+
+## list all the binaries recording some audio input.
+function _list_stream_sinks {
+	filter=$1
+	snk=$(pactl list source-outputs | \
+			grep -e Output -e binary | \
+			awk '{ print $NF }' | \
+			tr -d '"#' | tr '\t' '\n' \
+		)
+	[[ $snk == '' ]] && echo 'No stream sink found.' && return 0
+	echo 'Stream Sinks'
+	echo '============'
+	if [ -z "$filter" ]; then
+		echo $snk | sed 's/[[:space:]][0-9]/\n/g'
+	else
+		echo $snk | sed 's/[[:space:]][0-9]/\n/g' | grep -i $filter
+	fi
+}
+
+function _palbs {
+	$Source=''
+	$Sink=''
+}
+
+function palbs {
+	case $1 in
+	list-media)
+		_list_media_sources $2 $3
+	;;
+	list-stream)
+		_list_stream_sinks $2 $3
+	;;
+	--help|help|\?)
+		_show_help
+	;;
+	*)
+		echo 'palbs [ --help | help | ? ] for available options'
+	;;
+	esac
+}
+
+if [ "$0" == "$BASH_SOURCE" ]; then
+	palbs "$@"
+fi
+#[[ $a =~ ^[0-9]+$ ]] && echo yes || echo no
