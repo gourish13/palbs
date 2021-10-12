@@ -2,26 +2,32 @@
 
 ## Shows help and exit
 function _show_help {
-	echo 'Help'
+	echo 'Help and exit'
 }
+
 
 ## List all the binaries currently playing some media.
 function _list_media_sources {
 	filter=$1
 	src=$(pactl list sink-inputs | \
-			grep -e Input -e binary | \
-			awk '{ print $NF }' | 
-			tr -d '"#' | tr '\t' '\n' \
-		)
+			grep -E "Input|binary" | \
+			tr -d '"#' | 
+			awk '{ if ($NF ~ /^[:0-9:]/) printf $NF"\t"; else printf $NF"\n"}')
 	[[ $src == '' ]] && echo 'No media source found.' && return 0
 	echo 'Media Sources'
 	echo '============='
 	if [ -z "$filter" ]; then
-		echo $src | sed 's/[[:space:]][0-9]/\n/g'
+		printf "$src\n" | awk '{ 
+				if ($NF ~ /[:a-zA-Z:]+$/)
+					printf $(NF-1)"\t"$NF"\n" 
+			}'
 	else
-		echo $src | sed 's/[[:space:]][0-9]/\n/g' | grep -i $filter
+		printf "$src\n" | awk -v filter="${filter}" \
+		'tolower($0) ~ tolower(filter) \
+		{ if ($NF ~ /[:a-zA-Z:]+$/)
+			printf $(NF-1)"\t"$NF"\n" 
+		}' 
 	fi
-		
 }
 
 
@@ -29,43 +35,139 @@ function _list_media_sources {
 function _list_stream_sinks {
 	filter=$1
 	snk=$(pactl list source-outputs | \
-			grep -e Output -e binary | \
-			awk '{ print $NF }' | \
-			tr -d '"#' | tr '\t' '\n' \
-		)
+			grep -E "Output|binary" | \
+			tr -d '"#' | \
+			awk '{ if ($NF ~ /^[:0-9:]/) printf $NF"\t"; else printf $NF"\n"}') 
 	[[ $snk == '' ]] && echo 'No stream sink found.' && return 0
 	echo 'Stream Sinks'
 	echo '============'
 	if [ -z "$filter" ]; then
-		echo $snk | sed 's/[[:space:]][0-9]/\n/g'
+		printf "$snk\n" | awk '{ 
+				if ($NF ~ /[:a-zA-Z:]+$/)
+					printf $(NF-1)"\t"$NF"\n" 
+			}'
 	else
-		echo $snk | sed 's/[[:space:]][0-9]/\n/g' | grep -i $filter
+		printf "$snk\n" | awk -v filter="${filter}" \
+		'tolower($0) ~ tolower(filter) \
+		{ if ($NF ~ /[:a-zA-Z:]+$/)
+			printf $(NF-1)"\t"$NF"\n" 
+		}' 
 	fi
 }
 
-function _palbs {
-	$Source=''
-	$Sink=''
+
+function _get_one_selected_instance {
+	# Get list of instances passed as args
+	instance_list=$1
+	# List all instances for selection
+	echo "Please select one."
+	printf "$instance_list\n"
+	# Read id input, if entered wrong ask for id again
+	echo -n "Enter selected instance id from above ~> "
+	while read id
+	do
+		[[ $id =~ ^[0-9]+$ ]] && return $id
+		echo "Expected numeric id, got char string"
+		echo -n " ~> "
+	done;
 }
+
+
+function _start {
+	# Set to default Source and Sink initially
+	Source='@DEFAULT_SOURCE@'
+	Sink='@DEFAULT_SINK@'
+	# If Source and Sink set at palbsrc, then use them
+	[ -f $HOME/.config/palbs/palbsrc ] && source $HOME/.config/palbs/palbsrc
+
+	# Binary names of apps passed as arguments
+	media_bin=$1
+	stream_bin=$2
+	
+	# Get stream and media instances, if not found exit
+	media_id_name=$(_list_media_sources $media_bin | grep -E ^[0-9]+[[:space:]][A-Za-z]+$)
+	[ $? -eq 1 ] && echo "Not found specified media app instance" && return 1
+	stream_id_name=$(_list_stream_sinks $stream_bin | grep -E ^[0-9]+[[:space:]][A-Za-z]+$)
+	[ $? -eq 1 ] && echo "Not found specified stream app instance" && return 1
+	
+
+	printf "$media_id_name\n$stream_id_name\n"
+	
+	# Get count of stream and media instances
+	# If more than one instance, ask for one
+	
+	media_count=$(_list_media_sources $media_bin | grep -cE ^[0-9]+[[:space:]][A-Za-z]+$)
+	if [ $media_count -gt 1 ]; then
+		echo "Found $media_count media instances."
+		echo "For details of all instances check 'pactl list sink-inputs'"
+		_get_one_selected_instance "$media_id_name"
+		media_id=$?
+	else
+		media_id=$(printf "$media_id_name" | awk '{ print $1 }')
+	fi
+	
+	stream_count=$(_list_stream_sinks $stream_bin | grep -cE ^[0-9]+[[:space:]][A-Za-z]+$)
+	if [ $stream_count -gt 1 ]; then
+		echo "Found $stream_count stream instances."
+		echo "For details of all instances check 'pactl list source-outputs'"
+		_get_one_selected_instance "$stream_id_name"
+		stream_id=$?
+	else
+		stream_id=$(printf "$stream_id_name" | awk '{ print $1 }')
+	fi
+	
+	printf "$media_id\t$stream_id\n"
+	
+	# Load modules and start
+	pactl load-module module-null-sink sink_name=stream >> /tmp/palbs
+	pactl load-module module-combine-sink sink_name=stream_and_main \
+		slaves=$Sink,stream >> /tmp/palbs
+	pactl load-module module-loopback source=$Source sink=stream >> /tmp/palbs
+	
+	# Move source and sink
+	pactl move-sink-input $media_id stream_and_main
+	pactl move-source-output $stream_id stream.monitor
+}
+
+
+function _stop {
+	if [ -f /tmp/palbs ]; then
+		for id in $(cat /tmp/palbs)
+		do
+			pactl unload-module $id
+		done
+		rm /tmp/palbs
+	fi
+}
+
 
 function palbs {
 	case $1 in
 	list-media)
-		_list_media_sources $2 $3
+		_list_media_sources $2
 	;;
 	list-stream)
-		_list_stream_sinks $2 $3
+		_list_stream_sinks $2
 	;;
-	--help|help|\?)
+	start)
+		_start $2 $3
+	;;
+	stop)
+		_stop
+	;;
+	help|-h|-\?)
 		_show_help
 	;;
+	-v)
+		echo "palbs v0.1.0"
+	;;
 	*)
-		echo 'palbs [ --help | help | ? ] for available options'
+		echo 'palbs [ help | -h | -? ] for available options'
 	;;
 	esac
 }
 
+
 if [ "$0" == "$BASH_SOURCE" ]; then
 	palbs "$@"
 fi
-#[[ $a =~ ^[0-9]+$ ]] && echo yes || echo no
