@@ -155,6 +155,9 @@ function palbs {
 	stop)
 		_stop
 	;;
+	force-stop)
+		systemctl --user restart pulseaudio
+	;;
 	help|-h|-\?)
 		_show_help
 	;;
