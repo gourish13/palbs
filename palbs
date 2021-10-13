@@ -2,7 +2,24 @@
 
 ## Shows help and exit
 function _show_help {
-	echo 'Help and exit'
+       echo -e "\tpalbs - PulseAudio LoopBack Streaming\n\n"
+	   echo -e "\tUSAGE: palbs [-v] [-h] [-?] [version] [help] [list-media name] [list-stream name] [start media-name stream-name] [stop] [force-stop]\n\n\n"
+       echo -e "\t-v|version     	Shows version information.\n"
+       echo -e "\t-h | -? | help 	Shows help and exit.\n"
+       echo -e "\tlist-media [name]
+              Shows the a list of ids and names of all the program instances playing some media. If the optional parameter name is specified with the name of a  particular program, then the list only contains instances of that program.\n"
+
+       echo -e "\tlist-stream [name]
+              Shows the a list of ids and names of all the program instances recording audio. If the optional parameter name is specified with the name of a particular program, then the list only contains instances of that program.\n"
+
+       echo -e "\tstart media-name stream-name
+              Configures and changes the sink and source of the media playing program and streaming program respectively specified as media-name and stream-name and
+              sets them in such a way that the streaming program receives input from media being played by the other one.\n"
+
+       echo -e "\tstop	Unloads the modules changed to make the source and sink set back to initial defaults.\n"
+
+       echo -e "\tforce-stop
+              Restarts the PulseAudio service to load default PulseAudio configuration.\n"
 }
 
 
