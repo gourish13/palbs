@@ -1,0 +1,48 @@
+.TH "palbs" "1" "2021-10-13" "Linux"
+.
+.SH NAME
+palbs \- PulseAudio LoopBack Streaming
+.
+.SH SYNOPSIS
+.B palbs
+[\fB-v\fR] [\fB-h\fR] [\fB-?\fR] [\fBversion\fR] [\fBhelp\fR] [\fBlist-media \fIname\fR] [\fBlist-stream \fIname\fR] [\fBstart \fImedia-name stream-name\fR] [\fBstop\fR] [\fBforce-stop\fR]
+.
+.SH DESCRIPTION
+\fBpalbs\fR temporarily configures the sources and sinks of programs using \fIpactl\fR to allow audio streaming over WebRTC. For more information on \fIpactl\fR check out \fBpactl(1)\fR. 
+.
+.SH OPTIONS
+.TP
+.B -v
+Shows version information.
+.TP
+.B -h | -?
+Shows help and exit.
+.
+.SH COMMANDS
+.TP
+.B version
+Shows version information.
+.TP
+.B help
+Shows help and exit.
+.TP
+\fBlist-media \fR[\fIname\fR]
+Shows the a list of ids and names of all the program instances playing some media. If the optional parameter name is specified with the name of a particular program, then the list only contains instances of that program.
+.TP
+\fBlist-stream \fR[\fIname\fR]
+Shows the a list of ids and names of all the program instances recording audio. If the optional parameter name is specified with the name of a particular program, then the list only contains instances of that program.
+.TP
+\fBstart \fImedia-name stream-name\fR
+Configures and changes the sink and source of the media playing program and streaming program respectively specified as \fImedia-name\fR and \fIstream-name\fR and sets them in such a way that the streaming program receives input from media being played by the other one.
+.TP
+.B stop
+Unloads the modules changed to make the source and sink set back to initial defaults.
+.TP
+.B force-stop
+Restarts the PulseAudio service to load default PulseAudio configuration.
+.
+.SH AUTHOR
+Gourish Sadhu <gust.coders@gmail.com>       https://github.com/gourish13/palbs
+.
+.SH SEE ALSO
+.B pulseaudio(1), pactl(1)
