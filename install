@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Default is user wide installation at ~/.local/bin
+Prefix="$HOME/.local"
+
+# If provided root priviledges, make a system wide installation at /usr/bin
+if [[ $USER == 'root' ]]; then
+	Prefix="/usr"
+fi
+
+if [[ $# -eq 1 && $1 == '-r' ]]; then
+	echo "Removing $Prefix/bin/palbs"
+	rm $Prefix/bin/palbs
+else
+	mkdir -p $Prefix/bin
+	echo "Installing to $Prefix/bin"
+	cp $PWD/palbs $Prefix/bin/
+fi
