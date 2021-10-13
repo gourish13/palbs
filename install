@@ -8,11 +8,17 @@ if [[ $USER == 'root' ]]; then
 	Prefix="/usr"
 fi
 
+# If -r option passed uninstall
 if [[ $# -eq 1 && $1 == '-r' ]]; then
 	echo "Removing $Prefix/bin/palbs"
 	rm $Prefix/bin/palbs
+	echo "Removing manpage from $Prefix/share/man/man1"
+	rm $Prefix/share/man/man1/palbs.1
 else
 	mkdir -p $Prefix/bin
-	echo "Installing to $Prefix/bin"
+	echo "Installing to $Prefix/bin/"
 	cp $PWD/palbs $Prefix/bin/
+	mkdir -p $Prefix/share/man/man1
+	echo "Adding manpage to $Prefix/share/man/man1/"
+	cp $PWD/palbs.1 $Prefix/share/man/man1/
 fi
