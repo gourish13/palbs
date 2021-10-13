@@ -161,7 +161,7 @@ function palbs {
 	help|-h|-\?)
 		_show_help
 	;;
-	-v)
+	version|-v)
 		echo "palbs v0.1.0"
 	;;
 	*)
