@@ -107,9 +107,6 @@ function _start {
 	stream_id_name=$(_list_stream_sinks $stream_bin | grep -E ^[0-9]+[[:space:]][A-Za-z]+$)
 	[ $? -eq 1 ] && echo "Not found specified stream app instance" && return 1
 	
-
-	printf "$media_id_name\n$stream_id_name\n"
-	
 	# Get count of stream and media instances
 	# If more than one instance, ask for one
 	
@@ -132,8 +129,6 @@ function _start {
 	else
 		stream_id=$(printf "$stream_id_name" | awk '{ print $1 }')
 	fi
-	
-	printf "$media_id\t$stream_id\n"
 	
 	# Load modules and start
 	pactl load-module module-null-sink sink_name=stream >> /tmp/palbs
