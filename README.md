@@ -61,7 +61,8 @@ The below usage information is available in the manpage for offline access. Make
           start media-name stream-name
               Configures and changes the sink and source of the media playing program and streaming
               program respectively specified as media-name and stream-name  and sets them in such 
-              a way that the streaming program receives input from media being played by the other one.
+              a way that the streaming program receives input from media being played by the 
+              other one.
               
           stop   
               Unloads the modules changed to make the source and sink set back to initial defaults.
